@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Helpers.Json;
 using ArchiSteamFarm.Plugins.Interfaces;
 using ArchiSteamFarm.Steam;
@@ -12,7 +14,7 @@ using ArchiSteamFarm.Web.Responses;
 
 namespace ProfileStyle;
 
-internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules, IBotCommand2 {
+internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, IBotCommand2 {
     public string Name => nameof(ProfileStyle);
     public string RepositoryName => "JackieWaltRyan/ProfileStyle";
     public Version Version => typeof(ProfileStyle).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
@@ -123,10 +125,118 @@ internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules, IBotComm
     }
 
     public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
-        await Task.Delay(1).ConfigureAwait(false);
-
         if (args[0].Equals("GetMyItems", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
-            return $"{bot.BotName}, {message}, {args.ToJsonText()}, {steamID}";
+            switch (args.Length) {
+                case 1:
+                    return await GetMyItems(bot).ConfigureAwait(false);
+
+                case 2:
+                    return await GetMyItems(bot, args[1]).ConfigureAwait(false) ?? await GetMyItems(bot, null, args[1]).ConfigureAwait(false);
+
+                case 3:
+                    return await GetMyItems(bot, args[1], args[2]).ConfigureAwait(false);
+            }
+        }
+
+        return null;
+    }
+
+    [GeneratedRegex("""g_strCurrentLanguage = "(?<languageID>\w+)";""", RegexOptions.CultureInvariant)]
+    private static partial Regex GetLanguageRegex();
+
+    public static async Task<string?> GetMyItems(Bot defaultBot, string? botName = null, string? type = null) {
+        Bot bot = defaultBot;
+
+        if (botName != null) {
+            Bot? newBot = Bot.GetBot(botName);
+
+            if (newBot != null) {
+                bot = newBot;
+            } else {
+                return null;
+            }
+        }
+
+        if (bot.IsConnectedAndLoggedOn) {
+            string language;
+
+            try {
+                HtmlDocumentResponse? rawLanguageResponse = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamStoreURL}/account/languagepreferences")).ConfigureAwait(false);
+
+                string? languageResponse = rawLanguageResponse?.Content?.Source.Text;
+
+                if (languageResponse != null) {
+                    MatchCollection languageMatches = GetLanguageRegex().Matches(languageResponse);
+
+                    if (languageMatches.Count > 0) {
+                        language = languageMatches[0].Groups["languageID"].Value;
+                    } else {
+                        language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
+                    }
+                } else {
+                    language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
+                }
+            } catch {
+                language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
+            }
+
+            ObjectResponse<GetProfileItemsOwnedResponse>? rawResponse = await bot.ArchiWebHandler.UrlGetToJsonObjectWithSession<GetProfileItemsOwnedResponse>(new Uri($"https://api.steampowered.com/IPlayerService/GetProfileItemsOwned/v1/?access_token={bot.AccessToken}&language={language}")).ConfigureAwait(false);
+
+            GetProfileItemsOwnedResponse.ResponseData? response = rawResponse?.Content?.Response;
+
+            if (response != null) {
+                string result = "";
+
+                List<string> bytes = ["Avatars", "AvatarFrames", "MiniBackgrounds", "Backgrounds", "SpecialProfiles"];
+
+                if ((type != null) && bytes.Contains(type)) {
+                    bytes = [type];
+                }
+
+                if ((response.Avatars != null) && bytes.Contains("Avatars")) {
+                    result += "Avatars:\n";
+
+                    foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Avatars) {
+                        result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
+                    }
+                }
+
+                if ((response.AvatarFrames != null) && bytes.Contains("AvatarFrames")) {
+                    result += "AvatarFrames:\n";
+
+                    foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.AvatarFrames) {
+                        result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
+                    }
+                }
+
+                if ((response.MiniBackgrounds != null) && bytes.Contains("MiniBackgrounds")) {
+                    result += "MiniBackgrounds:\n";
+
+                    foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.MiniBackgrounds) {
+                        result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
+                    }
+                }
+
+                if ((response.Backgrounds != null) && bytes.Contains("Backgrounds")) {
+                    result += "Backgrounds:\n";
+
+                    foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Backgrounds) {
+                        result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
+                    }
+                }
+
+                if ((response.SpecialProfiles != null) && bytes.Contains("SpecialProfiles")) {
+                    result += "SpecialProfiles:\n";
+
+                    foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.SpecialProfiles) {
+                        result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
+                    }
+                }
+
+                return result;
+            }
+        } else {
+            return bot.Commands.FormatBotResponse("BotNotConnected");
         }
 
         return null;
