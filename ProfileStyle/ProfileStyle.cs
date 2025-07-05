@@ -123,19 +123,13 @@ internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules, IBotComm
     }
 
     public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
-        switch (args[0].ToUpperInvariant()) {
-            case "GETMYITEMS" when access >= EAccess.Master:
-				switch (args.Length) {
-			        case 1:
-				        ...
-                
-			        default:
-				        ...
-                }
+        await Task.Delay(1).ConfigureAwait(false);
 
-			default:
-				return;
+        if (args[0].Equals("GetMyItems", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
+            return $"{bot.BotName}, {message}, {args.ToJsonText()}, {steamID}";
         }
+
+        return null;
     }
 
     public async Task ChangeAvatar(Bot bot) {

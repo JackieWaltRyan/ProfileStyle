@@ -62,3 +62,33 @@ internal sealed record GetCommunityInventoryResponse {
         }
     }
 }
+
+internal sealed record GetProfileItemsOwnedResponse {
+    [JsonPropertyName("response")]
+    public ResponseData? Response { get; set; }
+
+    internal sealed record ResponseData {
+        [JsonPropertyName("animated_avatars")]
+        public List<ItemData>? Avatars { get; set; }
+
+        [JsonPropertyName("avatar_frames")]
+        public List<ItemData>? AvatarFrames { get; set; }
+
+        [JsonPropertyName("mini_profile_backgrounds")]
+        public List<ItemData>? MiniBackgrounds { get; set; }
+
+        [JsonPropertyName("profile_backgrounds")]
+        public List<ItemData>? Backgrounds { get; set; }
+
+        [JsonPropertyName("profile_modifiers")]
+        public List<ItemData>? SpecialProfiles { get; set; }
+
+        public sealed record ItemData {
+            [JsonPropertyName("communityitemid")]
+            public string? CommunityItemId { get; set; }
+
+            [JsonPropertyName("item_title")]
+            public string? ItemTitle { get; set; }
+        }
+    }
+}
