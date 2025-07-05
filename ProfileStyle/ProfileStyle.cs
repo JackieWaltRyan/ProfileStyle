@@ -12,7 +12,7 @@ using ArchiSteamFarm.Web.Responses;
 
 namespace ProfileStyle;
 
-internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules {
+internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules, IBotCommand2 {
     public string Name => nameof(ProfileStyle);
     public string RepositoryName => "JackieWaltRyan/ProfileStyle";
     public Version Version => typeof(ProfileStyle).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
@@ -119,6 +119,22 @@ internal sealed class ProfileStyle : IGitHubPluginUpdates, IBotModules {
                     ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(1, -1);
                 }
             }
+        }
+    }
+
+    public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
+        switch (args[0].ToUpperInvariant()) {
+            case "GETMYITEMS" when access >= EAccess.Master:
+				switch (args.Length) {
+			        case 1:
+				        ...
+                
+			        default:
+				        ...
+                }
+
+			default:
+				return;
         }
     }
 
