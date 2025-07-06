@@ -170,21 +170,16 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
             string? response = rawResponse?.Content?.Source?.Text;
 
-            bot.ArchiLogger.LogGenericInfo(response ?? "");
-
             if (response != null) {
                 MatchCollection showcasesIDMatches = ShowcasesIDRegex().Matches(response);
                 MatchCollection showcasesNameMatches = ShowcasesNameRegex().Matches(response);
-
-                bot.ArchiLogger.LogGenericInfo(showcasesIDMatches.ToJsonText());
-                bot.ArchiLogger.LogGenericInfo(showcasesNameMatches.ToJsonText());
 
                 if ((showcasesIDMatches.Count > 0) && (showcasesNameMatches.Count > 0) && (showcasesIDMatches.Count == showcasesNameMatches.Count)) {
                     int index = 0;
 
                     foreach (Match match in showcasesIDMatches) {
                         if (int.TryParse(match.Groups["showcaseID"].Value, out int showcaseID)) {
-                            showcasesDict[showcaseID] = showcasesNameMatches[index].Value;
+                            showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
                         }
 
                         index += 1;
