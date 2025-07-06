@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -141,6 +142,69 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         return null;
     }
 
+    [GeneratedRegex("""OnScreenshotClicked\(\s*(?<showcaseID>\d+)\s*\);""", RegexOptions.CultureInvariant)]
+    private static partial Regex ShowcasesIDRegex();
+
+    [GeneratedRegex("""<q class="ellipsis">(?<showcaseName>.+)</q>""", RegexOptions.CultureInvariant)]
+    private static partial Regex ShowcasesNameRegex();
+
+    public static async Task<Dictionary<int, string>> LoadingShowcases(Bot bot, int page = 1) {
+        try {
+            Dictionary<int, string> showcasesDict = [];
+
+            if (!bot.IsConnectedAndLoggedOn) {
+                return showcasesDict;
+            }
+
+            HtmlDocumentResponse? rawResponse = await bot.ArchiWebHandler.UrlPostToHtmlDocumentWithSession(
+                new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/images/screenshots"), data: new Dictionary<string, string>(7) {
+                    { "appid", "0" },
+                    { "p", $"{page}" },
+                    { "privacy", "30" },
+                    { "content", "1" },
+                    { "browsefilter", "myfiles" },
+                    { "sort", "newestfirst" },
+                    { "view", "imagewall" }
+                }, referer: new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/images/")
+            ).ConfigureAwait(false);
+
+            string? response = rawResponse?.Content?.Source?.Text;
+
+            if (response != null) {
+                MatchCollection showcasesIDMatches = ShowcasesIDRegex().Matches(response);
+                MatchCollection showcasesNameMatches = ShowcasesNameRegex().Matches(response);
+
+                if ((showcasesIDMatches.Count > 0) && (showcasesNameMatches.Count > 0) && (showcasesIDMatches.Count == showcasesNameMatches.Count)) {
+                    int index = 0;
+
+                    foreach (Match match in showcasesIDMatches) {
+                        if (int.TryParse(match.Groups["showcaseID"].Value, out int showcaseID)) {
+                            showcasesDict[showcaseID] = showcasesNameMatches[index].Value;
+                        }
+
+                        index += 1;
+                    }
+
+                    if (showcasesIDMatches.Count == 12) {
+                        Dictionary<int, string> newShowcasesDict = await LoadingShowcases(bot, page + 1).ConfigureAwait(false);
+
+                        showcasesDict = showcasesDict.Concat(newShowcasesDict).ToDictionary(static x => x.Key, static x => x.Value);
+                    }
+                }
+            } else {
+                await Task.Delay(3000).ConfigureAwait(false);
+
+                await LoadingShowcases(bot, page).ConfigureAwait(false);
+            }
+
+            return showcasesDict;
+        } catch {
+            await Task.Delay(3000).ConfigureAwait(false);
+
+            return await LoadingShowcases(bot, page).ConfigureAwait(false);
+        }
+    }
+
     [GeneratedRegex("""g_strCurrentLanguage = "(?<languageID>\w+)";""", RegexOptions.CultureInvariant)]
     private static partial Regex GetLanguageRegex();
 
@@ -194,43 +258,65 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                 }
 
                 if ((response.Avatars != null) && bytes.Contains("Avatars")) {
-                    result += "Avatars:\n";
+                    result += $"Avatars ({response.Avatars.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Avatars) {
                         result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
                     }
+
+                    result += "\n";
                 }
 
                 if ((response.AvatarFrames != null) && bytes.Contains("AvatarFrames")) {
-                    result += "AvatarFrames:\n";
+                    result += $"AvatarFrames ({response.AvatarFrames.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.AvatarFrames) {
                         result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
                     }
+
+                    result += "\n";
                 }
 
                 if ((response.MiniBackgrounds != null) && bytes.Contains("MiniBackgrounds")) {
-                    result += "MiniBackgrounds:\n";
+                    result += $"MiniBackgrounds ({response.MiniBackgrounds.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.MiniBackgrounds) {
                         result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
                     }
+
+                    result += "\n";
                 }
 
                 if ((response.Backgrounds != null) && bytes.Contains("Backgrounds")) {
-                    result += "Backgrounds:\n";
+                    result += $"Backgrounds ({response.Backgrounds.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Backgrounds) {
                         result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
                     }
+
+                    result += "\n";
+
+                    Dictionary<int, string> showcasesDict = await LoadingShowcases(bot).ConfigureAwait(false);
+
+                    if (showcasesDict.Count > 0) {
+                        result += $"    Showcases ({showcasesDict.Count}):\n";
+
+                        foreach (KeyValuePair<int, string> item in showcasesDict) {
+                            result += $"        {item.Key}: {item.Value}\n";
+                        }
+
+                        result += "\n";
+                    }
                 }
 
                 if ((response.SpecialProfiles != null) && bytes.Contains("SpecialProfiles")) {
-                    result += "SpecialProfiles:\n";
+                    result += $"SpecialProfiles ({response.SpecialProfiles.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.SpecialProfiles) {
                         result += $"    {item.CommunityItemId}: {item.ItemTitle}\n";
                     }
+
+                    result += "\n";
                 }
 
                 return result;

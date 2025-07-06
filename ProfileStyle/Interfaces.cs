@@ -85,7 +85,7 @@ internal sealed record GetProfileItemsOwnedResponse {
 
         public sealed record ItemData {
             [JsonPropertyName("communityitemid")]
-            public string? CommunityItemId { get; set; }
+            public int? CommunityItemId { get; set; }
 
             [JsonPropertyName("item_title")]
             public string? ItemTitle { get; set; }
