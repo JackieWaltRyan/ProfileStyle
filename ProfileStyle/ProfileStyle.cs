@@ -177,9 +177,6 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                 if ((showcasesIDMatches.Count > 0) && (showcasesNameMatches.Count > 0) && (showcasesIDMatches.Count == showcasesNameMatches.Count)) {
                     int index = 0;
 
-                    bot.ArchiLogger.LogGenericInfo(showcasesIDMatches.ToJsonText());
-                    bot.ArchiLogger.LogGenericInfo(showcasesNameMatches.ToJsonText());
-
                     foreach (Match match in showcasesIDMatches) {
                         if (int.TryParse(match.Groups["showcaseID"].Value, out int showcaseID)) {
                             showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
@@ -188,8 +185,12 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                         index += 1;
                     }
 
+                    bot.ArchiLogger.LogGenericInfo("1: " + showcasesDict.ToJsonText());
+
                     if (showcasesIDMatches.Count == 12) {
                         Dictionary<int, string> newShowcasesDict = await LoadingShowcases(bot, page + 1).ConfigureAwait(false);
+
+                        bot.ArchiLogger.LogGenericInfo("2: " + newShowcasesDict.ToJsonText());
 
                         showcasesDict = showcasesDict.Concat(newShowcasesDict).ToDictionary(static x => x.Key, static x => x.Value);
                     }
@@ -301,7 +302,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     Dictionary<int, string> showcasesDict = await LoadingShowcases(bot).ConfigureAwait(false);
 
-                    bot.ArchiLogger.LogGenericInfo(showcasesDict.ToJsonText());
+                    bot.ArchiLogger.LogGenericInfo("3: " + showcasesDict.ToJsonText());
 
                     if (showcasesDict.Count > 0) {
                         result += $"    Showcases ({showcasesDict.Count}):\n";
