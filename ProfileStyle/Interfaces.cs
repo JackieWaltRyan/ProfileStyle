@@ -27,7 +27,7 @@ internal sealed record ProfileStyleConfig {
         public List<int> Items { get; set; } = [];
 
         [JsonInclude]
-        public uint Timeout { get; set; } = 1;
+        public uint Timeout { get; set; } = 60;
 
         [JsonConstructor]
         public CategoryConfig() { }
