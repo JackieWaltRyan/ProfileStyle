@@ -150,7 +150,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
     public static async Task<Dictionary<int, string>> LoadingShowcases(Bot bot, int page = 1) {
         try {
-            Dictionary<int, string> showcasesDict = [];
+            Dictionary<int, string> showcasesDict = new();
 
             if (!bot.IsConnectedAndLoggedOn) {
                 return showcasesDict;
