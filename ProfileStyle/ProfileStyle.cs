@@ -148,9 +148,9 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     [GeneratedRegex("""<q class="ellipsis">(?<showcaseName>.+)</q>""", RegexOptions.CultureInvariant)]
     private static partial Regex ShowcasesNameRegex();
 
-    public static async Task<Dictionary<int, string>> LoadingShowcases(Bot bot, int page = 1) {
+    public static async Task<Dictionary<ulong, string>> LoadingShowcases(Bot bot, uint page = 1) {
         try {
-            Dictionary<int, string> showcasesDict = new();
+            Dictionary<ulong, string> showcasesDict = new();
 
             if (!bot.IsConnectedAndLoggedOn) {
                 return showcasesDict;
@@ -178,24 +178,15 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     int index = 0;
 
                     foreach (Match match in showcasesIDMatches) {
-                        bot.ArchiLogger.LogGenericInfo($"1.1: {match.Groups["showcaseID"].Value}");
-
-                        if (int.TryParse(match.Groups["showcaseID"].Value, out int showcaseID)) {
-                            bot.ArchiLogger.LogGenericInfo($"1.2: {showcaseID}");
-                            bot.ArchiLogger.LogGenericInfo($"1.3: {showcasesNameMatches[index].Groups["showcaseName"].Value}");
-
+                        if (ulong.TryParse(match.Groups["showcaseID"].Value, out ulong showcaseID)) {
                             showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
                         }
 
                         index += 1;
                     }
 
-                    bot.ArchiLogger.LogGenericInfo("1: " + showcasesDict.ToJsonText());
-
                     if (showcasesIDMatches.Count == 12) {
-                        Dictionary<int, string> newShowcasesDict = await LoadingShowcases(bot, page + 1).ConfigureAwait(false);
-
-                        bot.ArchiLogger.LogGenericInfo("2: " + newShowcasesDict.ToJsonText());
+                        Dictionary<ulong, string> newShowcasesDict = await LoadingShowcases(bot, page + 1).ConfigureAwait(false);
 
                         showcasesDict = showcasesDict.Concat(newShowcasesDict).ToDictionary(static x => x.Key, static x => x.Value);
                     }
@@ -305,14 +296,12 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     result += "\n";
 
-                    Dictionary<int, string> showcasesDict = await LoadingShowcases(bot).ConfigureAwait(false);
-
-                    bot.ArchiLogger.LogGenericInfo("3: " + showcasesDict.ToJsonText());
+                    Dictionary<ulong, string> showcasesDict = await LoadingShowcases(bot).ConfigureAwait(false);
 
                     if (showcasesDict.Count > 0) {
                         result += $"    Showcases ({showcasesDict.Count}):\n";
 
-                        foreach (KeyValuePair<int, string> item in showcasesDict) {
+                        foreach (KeyValuePair<ulong, string> item in showcasesDict) {
                             result += $"        {item.Key}: {item.Value}\n";
                         }
 
@@ -343,7 +332,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         uint timeout = 1;
 
         if (bot.IsConnectedAndLoggedOn) {
-            int communityitemid = ProfileStyleConfig[bot.BotName].Avatars.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Avatars.Items.Count)];
+            ulong communityitemid = ProfileStyleConfig[bot.BotName].Avatars.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Avatars.Items.Count)];
 
             bool response = await bot.ArchiWebHandler.UrlPostWithSession(
                 new Uri("https://api.steampowered.com/IPlayerService/SetAnimatedAvatar/v1/"), data: new Dictionary<string, string>(2) {
@@ -370,7 +359,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         uint timeout = 1;
 
         if (bot.IsConnectedAndLoggedOn) {
-            int communityitemid = ProfileStyleConfig[bot.BotName].AvatarFrames.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].AvatarFrames.Items.Count)];
+            ulong communityitemid = ProfileStyleConfig[bot.BotName].AvatarFrames.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].AvatarFrames.Items.Count)];
 
             bool response = await bot.ArchiWebHandler.UrlPostWithSession(
                 new Uri("https://api.steampowered.com/IPlayerService/SetAvatarFrame/v1/"), data: new Dictionary<string, string>(2) {
@@ -397,7 +386,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         uint timeout = 1;
 
         if (bot.IsConnectedAndLoggedOn) {
-            int communityitemid = ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items.Count)];
+            ulong communityitemid = ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items.Count)];
 
             bool response = await bot.ArchiWebHandler.UrlPostWithSession(
                 new Uri("https://api.steampowered.com/IPlayerService/SetMiniProfileBackground/v1/"), data: new Dictionary<string, string>(2) {
@@ -422,7 +411,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
     public async Task ChangeShowcase(Bot bot, int index) {
         if (bot.IsConnectedAndLoggedOn) {
-            int communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
+            ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
 
             bool response = await bot.ArchiWebHandler.UrlPostWithSession(
                 new Uri("https://api.steampowered.com/IPlayerService/SetProfileBackground/v1/"), data: new Dictionary<string, string>(2) {
@@ -443,7 +432,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         if (bot.IsConnectedAndLoggedOn) {
             int random = RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Backgrounds.Items.Count);
 
-            int communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Items[random];
+            ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Items[random];
 
             bool response = await bot.ArchiWebHandler.UrlPostWithSession(
                 new Uri("https://api.steampowered.com/IPlayerService/SetProfileBackground/v1/"), data: new Dictionary<string, string>(2) {
@@ -479,7 +468,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             List<GetCommunityInventoryResponse.ResponseData.Item>? items = rawResponse?.Content?.Response?.Items;
 
             if (items != null) {
-                int communityitemid = ProfileStyleConfig[bot.BotName].SpecialProfiles.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count)];
+                ulong communityitemid = ProfileStyleConfig[bot.BotName].SpecialProfiles.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count)];
 
                 GetCommunityInventoryResponse.ResponseData.Item? item = items.Find(x => x.CommunityItemId == communityitemid);
 

@@ -24,7 +24,7 @@ internal sealed record ProfileStyleConfig {
         public bool Enable { get; set; }
 
         [JsonInclude]
-        public List<int> Items { get; set; } = [];
+        public List<ulong> Items { get; set; } = [];
 
         [JsonInclude]
         public uint Timeout { get; set; } = 60;
@@ -35,7 +35,7 @@ internal sealed record ProfileStyleConfig {
 
     internal sealed record CategoryBackgroundConfig : CategoryConfig {
         [JsonInclude]
-        public List<int> Showcases { get; set; } = [];
+        public List<ulong> Showcases { get; set; } = [];
 
         [JsonConstructor]
         public CategoryBackgroundConfig() { }
@@ -55,10 +55,10 @@ internal sealed record GetCommunityInventoryResponse {
 
         internal sealed record Item {
             [JsonPropertyName("communityitemid")]
-            public int CommunityItemId { get; set; }
+            public ulong CommunityItemId { get; set; }
 
             [JsonPropertyName("appid")]
-            public int AppId { get; set; }
+            public uint AppId { get; set; }
         }
     }
 }
@@ -85,7 +85,7 @@ internal sealed record GetProfileItemsOwnedResponse {
 
         public sealed record ItemData {
             [JsonPropertyName("communityitemid")]
-            public string? CommunityItemId { get; set; }
+            public ulong? CommunityItemId { get; set; }
 
             [JsonPropertyName("item_title")]
             public string? ItemTitle { get; set; }
