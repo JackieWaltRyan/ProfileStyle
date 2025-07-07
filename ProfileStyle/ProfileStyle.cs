@@ -178,7 +178,12 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     int index = 0;
 
                     foreach (Match match in showcasesIDMatches) {
+                        bot.ArchiLogger.LogGenericInfo($"1.1: {match.Groups["showcaseID"].Value}");
+
                         if (int.TryParse(match.Groups["showcaseID"].Value, out int showcaseID)) {
+                            bot.ArchiLogger.LogGenericInfo($"1.2: {showcaseID}");
+                            bot.ArchiLogger.LogGenericInfo($"1.3: {showcasesNameMatches[index].Groups["showcaseName"].Value}");
+
                             showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
                         }
 
