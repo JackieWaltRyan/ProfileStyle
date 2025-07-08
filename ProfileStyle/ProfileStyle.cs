@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -182,9 +181,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     foreach (Match match in showcasesIDMatches) {
                         if (ulong.TryParse(match.Groups["showcaseID"].Value, out ulong showcaseID)) {
-                            string showcasesName = showcasesNameMatches[index].Groups["showcaseName"].Value;
-
-                            showcasesDict[showcaseID] = WebUtility.HtmlDecode(showcasesName);
+                            showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
                         }
 
                         index += 1;
