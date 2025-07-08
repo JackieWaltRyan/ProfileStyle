@@ -182,7 +182,9 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     foreach (Match match in showcasesIDMatches) {
                         if (ulong.TryParse(match.Groups["showcaseID"].Value, out ulong showcaseID)) {
-                            showcasesDict[showcaseID] = WebUtility.HtmlDecode(showcasesNameMatches[index].Groups["showcaseName"].Value);
+                            string showcasesName = showcasesNameMatches[index].Groups["showcaseName"].Value;
+
+                            showcasesDict[showcaseID] = WebUtility.HtmlDecode(showcasesName);
                         }
 
                         index += 1;
