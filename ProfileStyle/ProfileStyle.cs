@@ -128,12 +128,6 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
     public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
         if (args[0].Equals("GetMyItems", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
-            HtmlDocumentResponse? response1 = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
-            HtmlDocumentResponse? response2 = await bot.ArchiWebHandler.WebBrowser.UrlGetToHtmlDocument(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
-
-            bot.ArchiLogger.LogGenericInfo(response1?.Content?.Source.Text ?? string.Empty);
-            bot.ArchiLogger.LogGenericInfo(response2?.Content?.Source.Text ?? string.Empty);
-
             switch (args.Length) {
                 case 1:
                     return await GetMyItems(bot).ConfigureAwait(false);
