@@ -131,8 +131,8 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             HtmlDocumentResponse? response1 = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
             HtmlDocumentResponse? response2 = await bot.ArchiWebHandler.WebBrowser.UrlGetToHtmlDocument(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
 
-            bot.ArchiLogger.LogGenericInfo(response1?.Content?.Source.Text);
-            bot.ArchiLogger.LogGenericInfo(response2?.Content?.Source.Text);
+            bot.ArchiLogger.LogGenericInfo(response1?.Content?.Source.Text ?? string.Empty);
+            bot.ArchiLogger.LogGenericInfo(response2?.Content?.Source.Text ?? string.Empty);
 
             switch (args.Length) {
                 case 1:
