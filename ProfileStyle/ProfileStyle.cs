@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Helpers.Json;
 using ArchiSteamFarm.Plugins.Interfaces;
@@ -127,6 +128,12 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
     public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
         if (args[0].Equals("GetMyItems", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
+            HtmlDocumentResponse? response1 = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
+            HtmlDocumentResponse? response2 = await bot.ArchiWebHandler.WebBrowser.UrlGetToHtmlDocument(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
+
+            bot.ArchiLogger.LogGenericInfo(response1?.Content?.Source.Text);
+            bot.ArchiLogger.LogGenericInfo(response2?.Content?.Source.Text);
+
             switch (args.Length) {
                 case 1:
                     return await GetMyItems(bot).ConfigureAwait(false);
@@ -156,6 +163,8 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                 return showcasesDict;
             }
 
+            bot.ArchiLogger.LogGenericInfo($"Checking existing showcases: Page {page}");
+
             HtmlDocumentResponse? rawResponse = await bot.ArchiWebHandler.UrlPostToHtmlDocumentWithSession(
                 new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/images/screenshots"), data: new Dictionary<string, string>(7) {
                     { "appid", "0" },
@@ -179,7 +188,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     foreach (Match match in showcasesIDMatches) {
                         if (ulong.TryParse(match.Groups["showcaseID"].Value, out ulong showcaseID)) {
-                            showcasesDict[showcaseID] = showcasesNameMatches[index].Groups["showcaseName"].Value;
+                            showcasesDict[showcaseID] = HttpUtility.HtmlDecode(showcasesNameMatches[index].Groups["showcaseName"].Value);
                         }
 
                         index += 1;
@@ -298,6 +307,8 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     Dictionary<ulong, string> showcasesDict = await LoadingShowcases(bot).ConfigureAwait(false);
 
+                    bot.ArchiLogger.LogGenericInfo($"Existing showcases found: {showcasesDict.Count}");
+
                     if (showcasesDict.Count > 0) {
                         result += $"    Showcases ({showcasesDict.Count}):\n";
 
@@ -321,11 +332,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 return result;
             }
-        } else {
-            return bot.Commands.FormatBotResponse("BotNotConnected");
+
+            return bot.Commands.FormatBotResponse("CommunityInventoryIsEmpty or Error");
         }
 
-        return null;
+        return bot.Commands.FormatBotResponse("BotNotConnected");
     }
 
     public async Task ChangeAvatar(Bot bot) {
@@ -346,7 +357,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
-                bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             }
         } else {
             bot.ArchiLogger.LogGenericInfo($"Status: BotNotConnected | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -373,7 +384,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
-                bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             }
         } else {
             bot.ArchiLogger.LogGenericInfo($"Status: BotNotConnected | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -400,7 +411,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
-                bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             }
         } else {
             bot.ArchiLogger.LogGenericInfo($"Status: BotNotConnected | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -413,14 +424,24 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         if (bot.IsConnectedAndLoggedOn) {
             ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
 
-            bool response = await bot.ArchiWebHandler.UrlPostWithSession(
-                new Uri("https://api.steampowered.com/IPlayerService/SetProfileBackground/v1/"), data: new Dictionary<string, string>(2) {
-                    { "access_token", bot.AccessToken ?? string.Empty },
-                    { "communityitemid", $"{communityitemid}" }
-                }, session: ArchiWebHandler.ESession.None
+            ObjectResponse<ChangeShowcaseResponse>? rawResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(
+                new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: new Dictionary<string, string>(6) {
+                    { "profile_showcase[]", "22" },
+                    { "profile_showcase_purchaseid[]", "0" },
+                    { "rgShowcaseConfig[22_0][0][publishedfileid]", $"{communityitemid}" },
+                    { "type", "showcases" },
+                    { "sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty },
+                    { "json", "1" }
+                }
             ).ConfigureAwait(false);
 
-            bot.ArchiLogger.LogGenericInfo(response ? $"ID: {communityitemid} | Status: OK" : "Status: Error");
+            ChangeShowcaseResponse? response = rawResponse?.Content;
+
+            if (response != null) {
+                bot.ArchiLogger.LogGenericInfo(response.Success == 1 ? $"ID: {communityitemid} | Status: OK" : $"ID: {communityitemid} | Status: {response.ErrMsg}");
+            } else {
+                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error");
+            }
         } else {
             bot.ArchiLogger.LogGenericInfo("Status: BotNotConnected");
         }
@@ -450,7 +471,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     await ChangeShowcase(bot, random).ConfigureAwait(false);
                 }
             } else {
-                bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             }
         } else {
             bot.ArchiLogger.LogGenericInfo($"Status: BotNotConnected | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -505,13 +526,13 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                             ProfileStyleTimers[bot.BotName]["ChangeBackground"].Change(1, -1);
                         }
                     } else {
-                        bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                        bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
                     }
                 } else {
-                    bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                    bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: ItemNotOwned | Next run: {DateTime.Now.AddMinutes(timeout):T}");
                 }
             } else {
-                bot.ArchiLogger.LogGenericInfo($"Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
+                bot.ArchiLogger.LogGenericInfo($"Status: CommunityInventoryIsEmpty | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             }
         } else {
             bot.ArchiLogger.LogGenericInfo($"Status: BotNotConnected | Next run: {DateTime.Now.AddMinutes(timeout):T}");

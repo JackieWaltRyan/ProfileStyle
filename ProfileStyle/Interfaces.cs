@@ -92,3 +92,11 @@ internal sealed record GetProfileItemsOwnedResponse {
         }
     }
 }
+
+internal sealed record ChangeShowcaseResponse {
+    [JsonPropertyName("success")]
+    public uint Success { get; set; }
+
+    [JsonPropertyName("errmsg")]
+    public string? ErrMsg { get; set; }
+}
