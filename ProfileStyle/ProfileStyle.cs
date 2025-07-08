@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Helpers.Json;
 using ArchiSteamFarm.Plugins.Interfaces;
@@ -182,7 +182,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                     foreach (Match match in showcasesIDMatches) {
                         if (ulong.TryParse(match.Groups["showcaseID"].Value, out ulong showcaseID)) {
-                            showcasesDict[showcaseID] = HttpUtility.HtmlDecode(showcasesNameMatches[index].Groups["showcaseName"].Value);
+                            showcasesDict[showcaseID] = WebUtility.HtmlDecode(showcasesNameMatches[index].Groups["showcaseName"].Value);
                         }
 
                         index += 1;
