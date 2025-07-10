@@ -93,6 +93,38 @@ internal sealed record GetProfileItemsOwnedResponse {
     }
 }
 
+internal sealed record GetProfileCustomizationResponse {
+    [JsonPropertyName("response")]
+    public ResponseData? Response { get; set; }
+
+    internal sealed record ResponseData {
+        [JsonPropertyName("customizations")]
+        public List<Customization>? Customizations { get; set; }
+
+        internal sealed record Customization {
+            [JsonPropertyName("customization_type")]
+            public int CustomizationType { get; set; }
+
+            [JsonPropertyName("purchaseid")]
+            public string? PurchaseId { get; set; }
+
+            [JsonPropertyName("customization_style")]
+            public int CustomizationStyle { get; set; }
+
+            [JsonPropertyName("slots")]
+            public List<SlotData>? Slots { get; set; }
+
+            [JsonPropertyName("slots")]
+            public List<Dictionary<string, string>>? SlotsRaw { get; set; }
+
+            internal sealed record SlotData {
+                [JsonPropertyName("slot")]
+                public int Slot { get; set; }
+            }
+        }
+    }
+}
+
 internal sealed record ChangeShowcaseResponse {
     [JsonPropertyName("success")]
     public uint Success { get; set; }

@@ -139,6 +139,10 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             }
         }
 
+        if (args[0].Equals("ChangeShowcase", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
+            await ChangeShowcase(bot, 0).ConfigureAwait(false);
+        }
+
         return null;
     }
 
@@ -413,30 +417,74 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(TimeSpan.FromMinutes(timeout), TimeSpan.FromMilliseconds(-1));
     }
 
-    public async Task ChangeShowcase(Bot bot, int index) {
+    public static async Task ChangeShowcase(Bot bot, int index) {
         if (bot.IsConnectedAndLoggedOn) {
-            ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
+            ObjectResponse<GetProfileCustomizationResponse>? rawResponse = await bot.ArchiWebHandler.UrlGetToJsonObjectWithSession<GetProfileCustomizationResponse>(new Uri($"https://api.steampowered.com/IPlayerService/GetProfileCustomization/v1/?access_token={bot.AccessToken}&steamid={bot.SteamID}&include_purchased_customizations=true")).ConfigureAwait(false);
 
-            ObjectResponse<ChangeShowcaseResponse>? rawResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(
-                new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: new Dictionary<string, string>(6) {
-                    { "profile_showcase[]", "22" },
-                    { "profile_showcase_purchaseid[]", "0" },
-                    { "rgShowcaseConfig[22_0][0][publishedfileid]", $"{communityitemid}" },
+            List<GetProfileCustomizationResponse.ResponseData.Customization>? items = rawResponse?.Content?.Response?.Customizations;
+
+            bot.ArchiLogger.LogGenericInfo(items.ToJsonText());
+
+            if (items != null) {
+                Dictionary<string, string> data = new() {
                     { "type", "showcases" },
                     { "sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty },
                     { "json", "1" }
+                };
+
+                foreach (GetProfileCustomizationResponse.ResponseData.Customization item in items) {
+                    data["profile_showcase[]"] = $"{item.CustomizationType}";
+                    data["profile_showcase_purchaseid[]"] = $"{item.PurchaseId}";
+                    data[$"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}"] = $"{item.CustomizationStyle}";
+
+                    bot.ArchiLogger.LogGenericInfo(item.Slots.ToJsonText());
+                    bot.ArchiLogger.LogGenericInfo(item.SlotsRaw.ToJsonText());
+
+                    if ((item.Slots != null) && (item.SlotsRaw != null)) {
+                        int localIndex = 0;
+
+                        foreach (GetProfileCustomizationResponse.ResponseData.Customization.SlotData slot in item.Slots) {
+                            foreach (KeyValuePair<string, string> slotRaw in item.SlotsRaw[localIndex].Where(static slotRaw => slotRaw.Key != "slot")) {
+                                bot.ArchiLogger.LogGenericInfo($"{slotRaw.Key} = {slotRaw.Value}");
+
+                                data[$"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotRaw.Key}]"] = $"{slotRaw.Value}";
+                            }
+
+                            localIndex += 1;
+                        }
+                    }
                 }
-            ).ConfigureAwait(false);
 
-            ChangeShowcaseResponse? response = rawResponse?.Content;
+                bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
 
-            if (response != null) {
-                bot.ArchiLogger.LogGenericInfo(response.Success == 1 ? $"ID: {communityitemid} | Status: OK" : $"ID: {communityitemid} | Status: {response.ErrMsg}");
+                // ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
+                //
+                // ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
+                //
+                // ChangeShowcaseResponse? response = rawCsResponse?.Content;
+                //
+                // if (response != null) {
+                //     bot.ArchiLogger.LogGenericInfo(response.Success == 1 ? $"ID: {communityitemid} | Status: OK" : $"ID: {communityitemid} | Status: {response.ErrMsg}");
+                // } else {
+                //     bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error");
+                //
+                //     await Task.Delay(3000).ConfigureAwait(false);
+                //
+                //     await ChangeShowcase(bot, index).ConfigureAwait(false);
+                // }
             } else {
-                bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error");
+                bot.ArchiLogger.LogGenericInfo("Status: Error");
+
+                await Task.Delay(3000).ConfigureAwait(false);
+
+                await ChangeShowcase(bot, index).ConfigureAwait(false);
             }
         } else {
             bot.ArchiLogger.LogGenericInfo("Status: BotNotConnected");
+
+            await Task.Delay(3000).ConfigureAwait(false);
+
+            await ChangeShowcase(bot, index).ConfigureAwait(false);
         }
     }
 
