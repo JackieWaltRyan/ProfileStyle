@@ -438,19 +438,16 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     data[$"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}"] = $"{item.CustomizationStyle}";
 
                     bot.ArchiLogger.LogGenericInfo(item.Slots.ToJsonText());
-                    bot.ArchiLogger.LogGenericInfo(item.SlotsRaw.ToJsonText());
 
-                    if ((item.Slots != null) && (item.SlotsRaw != null)) {
-                        int localIndex = 0;
-
+                    if (item.Slots != null) {
                         foreach (GetProfileCustomizationResponse.ResponseData.Customization.SlotData slot in item.Slots) {
-                            foreach (KeyValuePair<string, string> slotRaw in item.SlotsRaw[localIndex].Where(static slotRaw => slotRaw.Key != "slot")) {
-                                bot.ArchiLogger.LogGenericInfo($"{slotRaw.Key} = {slotRaw.Value}");
+                            if (slot.Data != null) {
+                                foreach (KeyValuePair<string, JsonElement> slotData in slot.Data) {
+                                    bot.ArchiLogger.LogGenericInfo($"{slotData.Key} = {slotData.Value}");
 
-                                data[$"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotRaw.Key}]"] = $"{slotRaw.Value}";
+                                    data[$"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]"] = $"{slotData.Value}";
+                                }
                             }
-
-                            localIndex += 1;
                         }
                     }
                 }

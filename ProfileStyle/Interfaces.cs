@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ProfileStyle;
@@ -103,23 +104,23 @@ internal sealed record GetProfileCustomizationResponse {
 
         internal sealed record Customization {
             [JsonPropertyName("customization_type")]
-            public int CustomizationType { get; set; }
+            public uint CustomizationType { get; set; }
 
             [JsonPropertyName("purchaseid")]
             public string? PurchaseId { get; set; }
 
             [JsonPropertyName("customization_style")]
-            public int CustomizationStyle { get; set; }
+            public uint CustomizationStyle { get; set; }
 
             [JsonPropertyName("slots")]
             public List<SlotData>? Slots { get; set; }
 
-            [JsonPropertyName("slots")]
-            public List<Dictionary<string, string>>? SlotsRaw { get; set; }
-
             internal sealed record SlotData {
                 [JsonPropertyName("slot")]
-                public int Slot { get; set; }
+                public uint Slot { get; set; }
+
+                [JsonExtensionData]
+                public Dictionary<string, JsonElement>? Data { get; set; }
             }
         }
     }
