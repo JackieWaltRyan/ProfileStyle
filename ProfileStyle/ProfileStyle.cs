@@ -434,17 +434,19 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 foreach (GetProfileCustomizationResponse.ResponseData.Customization item in items) {
                     data["profile_showcase[]"] = $"{item.CustomizationType}";
-                    data["profile_showcase_purchaseid[]"] = $"{item.PurchaseId}";
-                    data[$"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}"] = $"{item.CustomizationStyle}";
 
-                    bot.ArchiLogger.LogGenericInfo(item.Slots.ToJsonText());
+                    if (item.PurchaseId != "0") {
+                        data["profile_showcase_purchaseid[]"] = $"{item.PurchaseId}";
+                    }
+
+                    if (item.CustomizationStyle != 0) {
+                        data[$"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}"] = $"{item.CustomizationStyle}";
+                    }
 
                     if (item.Slots != null) {
                         foreach (GetProfileCustomizationResponse.ResponseData.Customization.SlotData slot in item.Slots) {
                             if (slot.Data != null) {
                                 foreach (KeyValuePair<string, JsonElement> slotData in slot.Data) {
-                                    bot.ArchiLogger.LogGenericInfo($"{slotData.Key} = {slotData.Value}");
-
                                     data[$"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]"] = $"{slotData.Value}";
                                 }
                             }
