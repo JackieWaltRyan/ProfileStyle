@@ -426,7 +426,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             bot.ArchiLogger.LogGenericInfo(items.ToJsonText());
 
             if (items != null) {
-                Dictionary<string, string> data = new() {
+                OrderedDictionary<string, string> data = new() {
                     { "type", "showcases" },
                     { "sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty },
                     { "json", "1" }
