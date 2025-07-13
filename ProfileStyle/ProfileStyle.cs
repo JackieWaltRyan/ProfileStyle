@@ -140,7 +140,9 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         }
 
         if (args[0].Equals("ChangeShowcase", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
-            await ChangeShowcase(bot, 0).ConfigureAwait(false);
+            int random = RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Backgrounds.Items.Count);
+
+            await ChangeShowcase(bot, random).ConfigureAwait(false);
         }
 
         return null;
@@ -417,7 +419,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(TimeSpan.FromMinutes(timeout), TimeSpan.FromMilliseconds(-1));
     }
 
-    public static async Task ChangeShowcase(Bot bot, int index) {
+    public async Task ChangeShowcase(Bot bot, int index) {
         if (bot.IsConnectedAndLoggedOn) {
             ObjectResponse<GetProfileCustomizationResponse>? rawResponse = await bot.ArchiWebHandler.UrlGetToJsonObjectWithSession<GetProfileCustomizationResponse>(new Uri($"https://api.steampowered.com/IPlayerService/GetProfileCustomization/v1/?access_token={bot.AccessToken}&steamid={bot.SteamID}&include_purchased_customizations=true")).ConfigureAwait(false);
 
@@ -426,28 +428,28 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             bot.ArchiLogger.LogGenericInfo(items.ToJsonText());
 
             if (items != null) {
-                OrderedDictionary<string, string> data = new() {
-                    { "type", "showcases" },
-                    { "sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty },
-                    { "json", "1" }
-                };
+                List<KeyValuePair<string, string>> data = [
+                    new("type", "showcases"),
+                    new("sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty),
+                    new("json", "1")
+                ];
 
                 foreach (GetProfileCustomizationResponse.ResponseData.Customization item in items) {
-                    data["profile_showcase[]"] = $"{item.CustomizationType}";
+                    data.Add(new KeyValuePair<string, string>("profile_showcase[]", $"{item.CustomizationType}"));
 
                     if (item.PurchaseId != "0") {
-                        data["profile_showcase_purchaseid[]"] = $"{item.PurchaseId}";
+                        data.Add(new KeyValuePair<string, string>("profile_showcase_purchaseid[]", $"{item.PurchaseId}"));
                     }
 
                     if (item.CustomizationStyle != 0) {
-                        data[$"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}"] = $"{item.CustomizationStyle}";
+                        data.Add(new KeyValuePair<string, string>($"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}", $"{item.CustomizationStyle}"));
                     }
 
                     if (item.Slots != null) {
                         foreach (GetProfileCustomizationResponse.ResponseData.Customization.SlotData slot in item.Slots) {
                             if (slot.Data != null) {
                                 foreach (KeyValuePair<string, JsonElement> slotData in slot.Data) {
-                                    data[$"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]"] = $"{slotData.Value}";
+                                    data.Add(new KeyValuePair<string, string>($"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]", $"{slotData.Value}"));
                                 }
                             }
                         }
@@ -456,21 +458,21 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
 
-                // ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
-                //
-                // ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
-                //
-                // ChangeShowcaseResponse? response = rawCsResponse?.Content;
-                //
-                // if (response != null) {
-                //     bot.ArchiLogger.LogGenericInfo(response.Success == 1 ? $"ID: {communityitemid} | Status: OK" : $"ID: {communityitemid} | Status: {response.ErrMsg}");
-                // } else {
-                //     bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error");
-                //
-                //     await Task.Delay(3000).ConfigureAwait(false);
-                //
-                //     await ChangeShowcase(bot, index).ConfigureAwait(false);
-                // }
+                ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
+
+                ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
+
+                ChangeShowcaseResponse? response = rawCsResponse?.Content;
+
+                if (response != null) {
+                    bot.ArchiLogger.LogGenericInfo(response.Success == 1 ? $"ID: {communityitemid} | Status: OK" : $"ID: {communityitemid} | Status: {response.ErrMsg}");
+                } else {
+                    bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error");
+
+                    await Task.Delay(3000).ConfigureAwait(false);
+
+                    await ChangeShowcase(bot, index).ConfigureAwait(false);
+                }
             } else {
                 bot.ArchiLogger.LogGenericInfo("Status: Error");
 
