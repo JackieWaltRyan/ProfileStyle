@@ -102,24 +102,28 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (psc.Avatars.Enable || psc.AvatarFrames.Enable || psc.MiniBackgrounds.Enable || psc.Backgrounds.Enable || psc.SpecialProfiles.Enable) {
                 bot.ArchiLogger.LogGenericInfo($"ProfileStyleConfig: {psc.ToJsonText()}");
 
+                uint timeout = 1;
+
+                if (psc.SpecialProfiles.Enable && (psc.SpecialProfiles.Items.Count > 0)) {
+                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(timeout, -1);
+
+                    timeout = 5000;
+                }
+
                 if (psc.Avatars.Enable && (psc.Avatars.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeAvatar"].Change(1, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeAvatar"].Change(timeout, -1);
                 }
 
                 if (psc.AvatarFrames.Enable && (psc.AvatarFrames.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeAvatarFrame"].Change(1, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeAvatarFrame"].Change(timeout, -1);
                 }
 
                 if (psc.MiniBackgrounds.Enable && (psc.MiniBackgrounds.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(1, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(timeout, -1);
                 }
 
                 if (psc.Backgrounds.Enable && (psc.Backgrounds.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeBackground"].Change(1, -1);
-                }
-
-                if (psc.SpecialProfiles.Enable && (psc.SpecialProfiles.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(3, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeBackground"].Change(timeout, -1);
                 }
             }
         }
@@ -502,7 +506,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
 
-                if (ProfileStyleConfig[bot.BotName].Backgrounds.Showcases.Count >= random + 1) {
+                if ((ProfileStyleConfig[bot.BotName].Backgrounds.Showcases.Count >= random + 1) && (ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[random] != 0)) {
                     await ChangeShowcase(bot, random).ConfigureAwait(false);
                 }
             } else {
