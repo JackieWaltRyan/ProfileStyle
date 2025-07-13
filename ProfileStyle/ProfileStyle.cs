@@ -119,7 +119,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                 }
 
                 if (psc.SpecialProfiles.Enable && (psc.SpecialProfiles.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(1, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(3, -1);
                 }
             }
         }
