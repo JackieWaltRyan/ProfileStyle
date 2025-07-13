@@ -459,8 +459,6 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                 data.Add(new KeyValuePair<string, string>("sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty));
                 data.Add(new KeyValuePair<string, string>("json", "1"));
 
-                bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
-
                 ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data, referer: new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
 
                 ChangeShowcaseResponse? response = rawCsResponse?.Content;
@@ -534,7 +532,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (items != null) {
                 ulong communityitemid = ProfileStyleConfig[bot.BotName].SpecialProfiles.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count)];
 
-                GetCommunityInventoryResponse.ResponseData.Item? item = items.Find(x => x.CommunityItemId == communityitemid);
+                GetCommunityInventoryResponse.ResponseData.Item? item = items.Find(x => x.CommunityItemId == $"{communityitemid}");
 
                 if (item != null) {
                     bool response = await bot.ArchiWebHandler.UrlPostWithSession(

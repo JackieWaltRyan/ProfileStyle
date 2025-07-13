@@ -56,7 +56,7 @@ internal sealed record GetCommunityInventoryResponse {
 
         internal sealed record Item {
             [JsonPropertyName("communityitemid")]
-            public ulong CommunityItemId { get; set; }
+            public string? CommunityItemId { get; set; }
 
             [JsonPropertyName("appid")]
             public uint AppId { get; set; }
