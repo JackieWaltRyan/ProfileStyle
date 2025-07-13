@@ -102,28 +102,24 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (psc.Avatars.Enable || psc.AvatarFrames.Enable || psc.MiniBackgrounds.Enable || psc.Backgrounds.Enable || psc.SpecialProfiles.Enable) {
                 bot.ArchiLogger.LogGenericInfo($"ProfileStyleConfig: {psc.ToJsonText()}");
 
-                uint timeout = 1;
-
-                if (psc.SpecialProfiles.Enable && (psc.SpecialProfiles.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(timeout, -1);
-
-                    timeout = 5000;
-                }
-
                 if (psc.Avatars.Enable && (psc.Avatars.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeAvatar"].Change(timeout, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeAvatar"].Change(1, -1);
                 }
 
                 if (psc.AvatarFrames.Enable && (psc.AvatarFrames.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeAvatarFrame"].Change(timeout, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeAvatarFrame"].Change(1, -1);
                 }
 
                 if (psc.MiniBackgrounds.Enable && (psc.MiniBackgrounds.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(timeout, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeMiniBackground"].Change(1, -1);
                 }
 
                 if (psc.Backgrounds.Enable && (psc.Backgrounds.Items.Count > 0)) {
-                    ProfileStyleTimers[bot.BotName]["ChangeBackground"].Change(timeout, -1);
+                    ProfileStyleTimers[bot.BotName]["ChangeBackground"].Change(1, -1);
+                }
+
+                if (psc.SpecialProfiles.Enable && (psc.SpecialProfiles.Items.Count > 0)) {
+                    ProfileStyleTimers[bot.BotName]["ChangeSpecialProfile"].Change(1, -1);
                 }
             }
         }
@@ -337,7 +333,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     }
 
     public async Task ChangeAvatar(Bot bot) {
-        uint timeout = 1;
+        double timeout = 1;
+
+        if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+            timeout += 0.3;
+        }
 
         if (bot.IsConnectedAndLoggedOn) {
             ulong communityitemid = ProfileStyleConfig[bot.BotName].Avatars.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Avatars.Items.Count)];
@@ -352,6 +352,10 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (response) {
                 timeout = ProfileStyleConfig[bot.BotName].Avatars.Timeout;
 
+                if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+                    timeout += 0.3;
+                }
+
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -364,7 +368,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     }
 
     public async Task ChangeAvatarFrame(Bot bot) {
-        uint timeout = 1;
+        double timeout = 1;
+
+        if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+            timeout += 0.3;
+        }
 
         if (bot.IsConnectedAndLoggedOn) {
             ulong communityitemid = ProfileStyleConfig[bot.BotName].AvatarFrames.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].AvatarFrames.Items.Count)];
@@ -379,6 +387,10 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (response) {
                 timeout = ProfileStyleConfig[bot.BotName].AvatarFrames.Timeout;
 
+                if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+                    timeout += 0.3;
+                }
+
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: Error | Next run: {DateTime.Now.AddMinutes(timeout):T}");
@@ -391,7 +403,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     }
 
     public async Task ChangeMiniBackground(Bot bot) {
-        uint timeout = 1;
+        double timeout = 1;
+
+        if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+            timeout += 0.3;
+        }
 
         if (bot.IsConnectedAndLoggedOn) {
             ulong communityitemid = ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items[RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].MiniBackgrounds.Items.Count)];
@@ -405,6 +421,10 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
             if (response) {
                 timeout = ProfileStyleConfig[bot.BotName].MiniBackgrounds.Timeout;
+
+                if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+                    timeout += 0.3;
+                }
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
             } else {
@@ -487,7 +507,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     }
 
     public async Task ChangeBackground(Bot bot) {
-        uint timeout = 1;
+        double timeout = 1;
+
+        if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+            timeout += 0.3;
+        }
 
         if (bot.IsConnectedAndLoggedOn) {
             int random = RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Backgrounds.Items.Count);
@@ -503,6 +527,10 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
             if (response) {
                 timeout = ProfileStyleConfig[bot.BotName].Backgrounds.Timeout;
+
+                if (ProfileStyleConfig[bot.BotName].SpecialProfiles.Enable && (ProfileStyleConfig[bot.BotName].SpecialProfiles.Items.Count > 0)) {
+                    timeout += 0.3;
+                }
 
                 bot.ArchiLogger.LogGenericInfo($"ID: {communityitemid} | Status: OK | Next run: {DateTime.Now.AddMinutes(timeout):T}");
 
