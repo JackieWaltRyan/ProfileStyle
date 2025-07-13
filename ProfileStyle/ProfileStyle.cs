@@ -462,6 +462,8 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     }
                 }
 
+                bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
+
                 ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
 
                 ChangeShowcaseResponse? response = rawCsResponse?.Content;
