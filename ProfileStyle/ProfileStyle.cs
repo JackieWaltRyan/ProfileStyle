@@ -425,14 +425,14 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
             List<GetProfileCustomizationResponse.ResponseData.Customization>? items = rawResponse?.Content?.Response?.Customizations;
 
-            bot.ArchiLogger.LogGenericInfo(items.ToJsonText());
-
             if (items != null) {
                 List<KeyValuePair<string, string>> data = [
                     new("type", "showcases"),
                     new("sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty),
                     new("json", "1")
                 ];
+
+                ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
 
                 foreach (GetProfileCustomizationResponse.ResponseData.Customization item in items) {
                     data.Add(new KeyValuePair<string, string>("profile_showcase[]", $"{item.CustomizationType}"));
@@ -449,16 +449,18 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                         foreach (GetProfileCustomizationResponse.ResponseData.Customization.SlotData slot in item.Slots) {
                             if (slot.Data != null) {
                                 foreach (KeyValuePair<string, JsonElement> slotData in slot.Data) {
-                                    data.Add(new KeyValuePair<string, string>($"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]", $"{slotData.Value}"));
+                                    string value = $"{slotData.Value}";
+
+                                    if (item.CustomizationType == 22) {
+                                        value = $"{communityitemid}";
+                                    }
+
+                                    data.Add(new KeyValuePair<string, string>($"rgShowcaseConfig[{item.CustomizationType}_{item.PurchaseId}][{slot.Slot}][{slotData.Key}]", value));
                                 }
                             }
                         }
                     }
                 }
-
-                bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
-
-                ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
 
                 ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
 
