@@ -233,7 +233,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             string language;
 
             try {
-                HtmlDocumentResponse? rawLanguageResponse = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamStoreURL}/account/languagepreferences")).ConfigureAwait(false);
+                HtmlDocumentResponse? rawLanguageResponse = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamStoreURL}/account/languagepreferences"), referer: new Uri($"{ArchiWebHandler.SteamStoreURL}/account/")).ConfigureAwait(false);
 
                 string? languageResponse = rawLanguageResponse?.Content?.Source.Text;
 
@@ -426,20 +426,13 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             List<GetProfileCustomizationResponse.ResponseData.Customization>? items = rawResponse?.Content?.Response?.Customizations;
 
             if (items != null) {
-                List<KeyValuePair<string, string>> data = [
-                    new("type", "showcases"),
-                    new("sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty),
-                    new("json", "1")
-                ];
+                List<KeyValuePair<string, string>> data = [];
 
                 ulong communityitemid = ProfileStyleConfig[bot.BotName].Backgrounds.Showcases[index];
 
                 foreach (GetProfileCustomizationResponse.ResponseData.Customization item in items) {
                     data.Add(new KeyValuePair<string, string>("profile_showcase[]", $"{item.CustomizationType}"));
-
-                    if (item.PurchaseId != "0") {
-                        data.Add(new KeyValuePair<string, string>("profile_showcase_purchaseid[]", $"{item.PurchaseId}"));
-                    }
+                    data.Add(new KeyValuePair<string, string>("profile_showcase_purchaseid[]", $"{item.PurchaseId}"));
 
                     if (item.CustomizationStyle != 0) {
                         data.Add(new KeyValuePair<string, string>($"profile_showcase_style_{item.CustomizationType}_{item.PurchaseId}", $"{item.CustomizationStyle}"));
@@ -462,9 +455,13 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     }
                 }
 
+                data.Add(new KeyValuePair<string, string>("type", "showcases"));
+                data.Add(new KeyValuePair<string, string>("sessionID", bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamCommunityURL, "sessionid") ?? string.Empty));
+                data.Add(new KeyValuePair<string, string>("json", "1"));
+
                 bot.ArchiLogger.LogGenericInfo(data.ToJsonText());
 
-                ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data).ConfigureAwait(false);
+                ObjectResponse<ChangeShowcaseResponse>? rawCsResponse = await bot.ArchiWebHandler.UrlPostToJsonObjectWithSession<ChangeShowcaseResponse>(new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/"), data: data, referer: new Uri($"{ArchiWebHandler.SteamCommunityURL}/profiles/{bot.SteamID}/edit/showcases")).ConfigureAwait(false);
 
                 ChangeShowcaseResponse? response = rawCsResponse?.Content;
 
