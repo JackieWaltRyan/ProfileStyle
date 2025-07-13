@@ -139,12 +139,6 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             }
         }
 
-        if (args[0].Equals("ChangeShowcase", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
-            int random = RandomNumberGenerator.GetInt32(ProfileStyleConfig[bot.BotName].Backgrounds.Items.Count);
-
-            await ChangeShowcase(bot, random).ConfigureAwait(false);
-        }
-
         return null;
     }
 
