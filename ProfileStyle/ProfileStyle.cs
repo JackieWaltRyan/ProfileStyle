@@ -127,16 +127,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
 
     public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
         if (args[0].Equals("GetMyItems", StringComparison.OrdinalIgnoreCase) && (access >= EAccess.FamilySharing)) {
-            switch (args.Length) {
-                case 1:
-                    return await GetMyItems(bot).ConfigureAwait(false);
-
-                case 2:
-                    return await GetMyItems(bot, args[1]).ConfigureAwait(false) ?? await GetMyItems(bot, null, args[1]).ConfigureAwait(false);
-
-                case 3:
-                    return await GetMyItems(bot, args[1], args[2]).ConfigureAwait(false);
-            }
+            return await GetMyItems(bot, args).ConfigureAwait(false);
         }
 
         return null;
@@ -210,40 +201,50 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
     [GeneratedRegex("""g_strCurrentLanguage = "(?<languageID>\w+)";""", RegexOptions.CultureInvariant)]
     private static partial Regex GetLanguageRegex();
 
-    public static async Task<string?> GetMyItems(Bot defaultBot, string? botName = null, string? type = null) {
-        Bot bot = defaultBot;
+    public static async Task<string?> GetMyItems(Bot bot, string[] args) {
+        string? type = null;
+        string? language = null;
 
-        if (botName != null) {
-            Bot? newBot = Bot.GetBot(botName);
+        List<string> types = ["Avatars", "AvatarFrames", "MiniBackgrounds", "Backgrounds", "SpecialProfiles"];
+        List<string> languages = ["schinese", "tchinese", "japanese", "koreana", "thai", "bulgarian", "czech", "danish", "german", "english", "spanish", "latam", "greek", "french", "italian", "indonesian", "hungarian", "dutch", "norwegian", "polish", "portuguese", "brazilian", "romanian", "russian", "finnish", "swedish", "turkish", "vietnamese", "ukrainian"];
+
+        foreach (string arg in args) {
+            Bot? newBot = Bot.GetBot(arg);
 
             if (newBot != null) {
                 bot = newBot;
-            } else {
-                return null;
+            }
+
+            if (types.Contains(arg)) {
+                type = arg;
+            }
+
+            if (languages.Contains(arg)) {
+                language = arg;
             }
         }
 
         if (bot.IsConnectedAndLoggedOn) {
-            string language;
+            if (language == null) {
+                try {
+                    HtmlDocumentResponse? rawLanguageResponse = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamStoreURL}/account/languagepreferences"), referer: new Uri($"{ArchiWebHandler.SteamStoreURL}/account/")).ConfigureAwait(false);
 
-            try {
-                HtmlDocumentResponse? rawLanguageResponse = await bot.ArchiWebHandler.UrlGetToHtmlDocumentWithSession(new Uri($"{ArchiWebHandler.SteamStoreURL}/account/languagepreferences"), referer: new Uri($"{ArchiWebHandler.SteamStoreURL}/account/")).ConfigureAwait(false);
+                    string? languageResponse = rawLanguageResponse?.Content?.Source.Text;
 
-                string? languageResponse = rawLanguageResponse?.Content?.Source.Text;
+                    if (languageResponse != null) {
+                        MatchCollection languageMatches = GetLanguageRegex().Matches(languageResponse);
 
-                if (languageResponse != null) {
-                    MatchCollection languageMatches = GetLanguageRegex().Matches(languageResponse);
-
-                    if (languageMatches.Count > 0) {
-                        language = languageMatches[0].Groups["languageID"].Value;
+                        if (languageMatches.Count > 0) {
+                            language = languageMatches[0].Groups["languageID"].Value;
+                        } else {
+                            language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
+                        }
                     } else {
                         language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
                     }
-                } else {
+                } catch {
                     language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
                 }
-            } catch {
-                language = bot.ArchiWebHandler.WebBrowser.CookieContainer.GetCookieValue(ArchiWebHandler.SteamStoreURL, "Steam_Language") ?? "english";
             }
 
             ObjectResponse<GetProfileItemsOwnedResponse>? rawResponse = await bot.ArchiWebHandler.UrlGetToJsonObjectWithSession<GetProfileItemsOwnedResponse>(new Uri($"https://api.steampowered.com/IPlayerService/GetProfileItemsOwned/v1/?access_token={bot.AccessToken}&language={language}")).ConfigureAwait(false);
@@ -253,13 +254,11 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
             if (response != null) {
                 string result = "";
 
-                List<string> bytes = ["Avatars", "AvatarFrames", "MiniBackgrounds", "Backgrounds", "SpecialProfiles"];
-
-                if ((type != null) && bytes.Contains(type)) {
-                    bytes = [type];
+                if (type != null) {
+                    types = [type];
                 }
 
-                if ((response.Avatars != null) && bytes.Contains("Avatars")) {
+                if ((response.Avatars != null) && types.Contains("Avatars")) {
                     result += $"Avatars ({response.Avatars.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Avatars) {
@@ -269,7 +268,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     result += "\n";
                 }
 
-                if ((response.AvatarFrames != null) && bytes.Contains("AvatarFrames")) {
+                if ((response.AvatarFrames != null) && types.Contains("AvatarFrames")) {
                     result += $"AvatarFrames ({response.AvatarFrames.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.AvatarFrames) {
@@ -279,7 +278,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     result += "\n";
                 }
 
-                if ((response.MiniBackgrounds != null) && bytes.Contains("MiniBackgrounds")) {
+                if ((response.MiniBackgrounds != null) && types.Contains("MiniBackgrounds")) {
                     result += $"MiniBackgrounds ({response.MiniBackgrounds.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.MiniBackgrounds) {
@@ -289,7 +288,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     result += "\n";
                 }
 
-                if ((response.Backgrounds != null) && bytes.Contains("Backgrounds")) {
+                if ((response.Backgrounds != null) && types.Contains("Backgrounds")) {
                     result += $"Backgrounds ({response.Backgrounds.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.Backgrounds) {
@@ -313,7 +312,7 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     }
                 }
 
-                if ((response.SpecialProfiles != null) && bytes.Contains("SpecialProfiles")) {
+                if ((response.SpecialProfiles != null) && types.Contains("SpecialProfiles")) {
                     result += $"SpecialProfiles ({response.SpecialProfiles.Count}):\n";
 
                     foreach (GetProfileItemsOwnedResponse.ResponseData.ItemData item in response.SpecialProfiles) {

@@ -103,6 +103,20 @@ more precise, the profile will have the illustration that was there before). For
 
 ## Commands
 
-| Command                                                                                           | Access           | Description                                                                                  | Example                                                                                             |
-|---------------------------------------------------------------------------------------------------|------------------|----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| `GetMyItems`<br/>`GetMyItems <Category>`<br/>`GetMyItems [Bot]`<br/>`GetMyItems [Bot] <Category>` | `Family Sharing` | Prints the ID and name of all items on the account that can be used to decorate the profile. | `GetMyItems`<br/>`GetMyItems Avatars`<br/>`GetMyItems MyBotName`<br/>`GetMyItems MyBotName Avatars` |
+| Command                                  | Access           | Description                                                                                  | Example                                |
+|------------------------------------------|------------------|----------------------------------------------------------------------------------------------|----------------------------------------|
+| `GetMyItems <Bot> <Category> <Language>` | `Family Sharing` | Prints the ID and name of all items on the account that can be used to decorate the profile. | `GetMyItems MyBotName Avatars english` |
+
+Note: The order of the command arguments does not matter.
+
+- `Bot` - Optional parameter. The name of your bot for which you need to print the list of items. If not specified, the
+  bot installed by default in ASF will be used.<br><br>
+- `Category` - Optional parameter. The name of a specific category of items for which you want to print. If not
+  specified, all items for all categories will be displayed at once. Acceptable values: `Avatars`, `AvatarFrames`,
+  `MiniBackgrounds`, `Backgrounds`, `SpecialProfiles`.<br><br>
+- `Language` - Optional parameter. The language in which to print the names of objects (for those objects that have
+  localized names). If not specified, the plugin will try to determine the language of the bot account itself, if it
+  fails, then `english` will be used. Acceptable values: `schinese`, `tchinese`, `japanese`, `koreana`, `thai`,
+  `bulgarian`, `czech`, `danish`, `german`, `english`, `spanish`, `latam`, `greek`, `french`, `italian`, `indonesian`,
+  `hungarian`, `dutch`, `norwegian`, `polish`, `portuguese`, `brazilian`, `romanian`, `russian`, `finnish`, `swedish`,
+  `turkish`, `vietnamese`, `ukrainian`.
