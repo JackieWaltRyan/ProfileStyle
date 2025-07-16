@@ -1,5 +1,9 @@
 # Profile Style Plugin for ArchiSteamFarm
 
+[![GitHub release version](https://img.shields.io/github/v/release/JackieWaltRyan/ProfileStyle.svg?label=Stable&logo=github)](https://github.com/JackieWaltRyan/ProfileStyle/releases/latest)
+[![GitHub release date](https://img.shields.io/github/release-date/JackieWaltRyan/ProfileStyle.svg?label=Released&logo=github)](https://github.com/JackieWaltRyan/ProfileStyle/releases/latest)
+[![Github release downloads](https://img.shields.io/github/downloads/JackieWaltRyan/ProfileStyle/latest/total.svg?label=Downloads&logo=github)](https://github.com/JackieWaltRyan/ProfileStyle/releases/latest)
+
 ASF plugin for automatic change of various profile design items.
 
 ## Installation
