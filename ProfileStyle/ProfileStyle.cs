@@ -179,15 +179,13 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
                     }
 
                     if (showcasesIDMatches.Count == 12) {
-                        Dictionary<ulong, string> newShowcasesDict = await LoadingShowcases(bot, page + 1).ConfigureAwait(false);
-
-                        showcasesDict = showcasesDict.Concat(newShowcasesDict).ToDictionary(static x => x.Key, static x => x.Value);
+                        showcasesDict = showcasesDict.Concat(await LoadingShowcases(bot, page + 1).ConfigureAwait(false)).ToDictionary(static x => x.Key, static x => x.Value);
                     }
                 }
             } else {
                 await Task.Delay(3000).ConfigureAwait(false);
 
-                await LoadingShowcases(bot, page).ConfigureAwait(false);
+                showcasesDict = showcasesDict.Concat(await LoadingShowcases(bot, page).ConfigureAwait(false)).ToDictionary(static x => x.Key, static x => x.Value);
             }
 
             return showcasesDict;
