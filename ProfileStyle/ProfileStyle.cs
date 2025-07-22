@@ -29,47 +29,9 @@ internal sealed partial class ProfileStyle : IGitHubPluginUpdates, IBotModules, 
         if (additionalConfigProperties != null) {
             if (ProfileStyleTimers.TryGetValue(bot.BotName, out Dictionary<string, Timer>? dict)) {
                 foreach (KeyValuePair<string, Timer> timers in dict) {
-                    switch (timers.Key) {
-                        case "ChangeAvatar": {
-                            await timers.Value.DisposeAsync().ConfigureAwait(false);
+                    await timers.Value.DisposeAsync().ConfigureAwait(false);
 
-                            bot.ArchiLogger.LogGenericInfo("ChangeAvatar Dispose.");
-
-                            break;
-                        }
-
-                        case "ChangeAvatarFrame": {
-                            await timers.Value.DisposeAsync().ConfigureAwait(false);
-
-                            bot.ArchiLogger.LogGenericInfo("ChangeAvatarFrame Dispose.");
-
-                            break;
-                        }
-
-                        case "ChangeMiniBackground": {
-                            await timers.Value.DisposeAsync().ConfigureAwait(false);
-
-                            bot.ArchiLogger.LogGenericInfo("ChangeMiniBackground Dispose.");
-
-                            break;
-                        }
-
-                        case "ChangeBackground": {
-                            await timers.Value.DisposeAsync().ConfigureAwait(false);
-
-                            bot.ArchiLogger.LogGenericInfo("ChangeBackground Dispose.");
-
-                            break;
-                        }
-
-                        case "ChangeSpecialProfile": {
-                            await timers.Value.DisposeAsync().ConfigureAwait(false);
-
-                            bot.ArchiLogger.LogGenericInfo("ChangeSpecialProfile Dispose.");
-
-                            break;
-                        }
-                    }
+                    bot.ArchiLogger.LogGenericInfo($"{timers.Key} Dispose.");
                 }
             }
 
